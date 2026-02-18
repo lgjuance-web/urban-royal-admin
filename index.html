@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Urban Royal Music - Admin Panel</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--card:#161b22;--border:#30363d;--primary:#6c63ff;--primary-hover:#7c75ff;--danger:#f85149;--danger-hover:#ff6b63;--success:#3fb950;--warn:#d29922;--text:#e6edf3;--text-muted:#8b949e;--premium:#ffd700}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+a{color:var(--primary);text-decoration:none}
+
+.login-container{display:flex;align-items:center;justify-content:center;min-height:100vh;flex-direction:column;gap:24px}
+.login-container h1{font-size:2rem;background:linear-gradient(135deg,var(--primary),#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.login-container p{color:var(--text-muted);margin-bottom:12px}
+.login-btn{display:flex;align-items:center;gap:10px;padding:14px 32px;border:none;border-radius:10px;font-size:1rem;cursor:pointer;font-weight:600;transition:all .2s}
+.google-btn{background:#fff;color:#333}
+.google-btn:hover{background:#f0f0f0;transform:translateY(-1px)}
+.google-btn svg{width:20px;height:20px}
+.login-error{color:var(--danger);font-size:.9rem;max-width:400px;text-align:center}
+
+.dashboard{display:none;padding:20px;max-width:1200px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-bottom:1px solid var(--border);margin-bottom:24px}
+.header h1{font-size:1.5rem;background:linear-gradient(135deg,var(--primary),#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header-right{display:flex;align-items:center;gap:12px}
+.admin-email{color:var(--text-muted);font-size:.85rem}
+.logout-btn{padding:8px 16px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:8px;cursor:pointer;font-size:.85rem;transition:all .2s}
+.logout-btn:hover{border-color:var(--danger);color:var(--danger)}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center}
+.stat-number{font-size:2.2rem;font-weight:700;margin-bottom:4px}
+.stat-label{color:var(--text-muted);font-size:.85rem;text-transform:uppercase;letter-spacing:1px}
+.stat-total .stat-number{color:var(--primary)}
+.stat-premium .stat-number{color:var(--premium)}
+.stat-banned .stat-number{color:var(--danger)}
+.stat-free .stat-number{color:var(--success)}
+
+.search-bar{margin-bottom:20px}
+.search-bar input{width:100%;padding:12px 16px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:1rem;outline:none;transition:border-color .2s}
+.search-bar input:focus{border-color:var(--primary)}
+.search-bar input::placeholder{color:var(--text-muted)}
+
+.users-table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden;border:1px solid var(--border)}
+.users-table th{padding:14px 16px;text-align:left;font-size:.8rem;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);background:#0d1117;border-bottom:1px solid var(--border)}
+.users-table td{padding:12px 16px;border-bottom:1px solid var(--border);font-size:.9rem;vertical-align:middle}
+.users-table tr:last-child td{border-bottom:none}
+.users-table tr:hover td{background:rgba(108,99,255,.05)}
+
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:600;text-transform:uppercase}
+.badge-premium{background:rgba(255,215,0,.15);color:var(--premium)}
+.badge-free{background:rgba(63,185,80,.15);color:var(--success)}
+.badge-banned{background:rgba(248,81,73,.15);color:var(--danger)}
+.badge-admin{background:rgba(108,99,255,.15);color:var(--primary)}
+
+.btn{padding:6px 12px;border:none;border-radius:6px;font-size:.8rem;cursor:pointer;font-weight:500;transition:all .2s}
+.btn-sm{padding:5px 10px;font-size:.75rem}
+.btn-premium{background:rgba(255,215,0,.15);color:var(--premium);border:1px solid rgba(255,215,0,.3)}
+.btn-premium:hover{background:rgba(255,215,0,.25)}
+.btn-free{background:rgba(63,185,80,.15);color:var(--success);border:1px solid rgba(63,185,80,.3)}
+.btn-free:hover{background:rgba(63,185,80,.25)}
+.btn-ban{background:rgba(248,81,73,.15);color:var(--danger);border:1px solid rgba(248,81,73,.3)}
+.btn-ban:hover{background:rgba(248,81,73,.25)}
+.btn-unban{background:rgba(63,185,80,.15);color:var(--success);border:1px solid rgba(63,185,80,.3)}
+.btn-unban:hover{background:rgba(63,185,80,.25)}
+.btn-msg{background:rgba(108,99,255,.15);color:var(--primary);border:1px solid rgba(108,99,255,.3)}
+.btn-msg:hover{background:rgba(108,99,255,.25)}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center}
+.modal-overlay.active{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;width:90%;max-width:480px}
+.modal h3{margin-bottom:16px;font-size:1.1rem}
+.modal textarea{width:100%;min-height:120px;padding:12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.95rem;resize:vertical;outline:none}
+.modal textarea:focus{border-color:var(--primary)}
+.modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
+.btn-cancel{background:transparent;color:var(--text-muted);border:1px solid var(--border)}
+.btn-cancel:hover{border-color:var(--text)}
+.btn-send{background:var(--primary);color:#fff;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-weight:600}
+.btn-send:hover{background:var(--primary-hover)}
+
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 24px;border-radius:10px;font-size:.9rem;z-index:2000;opacity:0;transition:opacity .3s;font-weight:500}
+.toast.show{opacity:1}
+.toast-success{background:var(--success);color:#fff}
+.toast-error{background:var(--danger);color:#fff}
+
+.loading{text-align:center;padding:40px;color:var(--text-muted)}
+.spinner{display:inline-block;width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.table-container{overflow-x:auto;border-radius:12px}
+
+@media(max-width:768px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .users-table th:nth-child(5),.users-table td:nth-child(5){display:none}
+  .header{flex-direction:column;gap:12px;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div class="login-container" id="loginScreen">
+  <h1>Urban Royal Music</h1>
+  <p>Panel de Administracion</p>
+  <button class="login-btn google-btn" onclick="loginWithGoogle()">
+    <svg viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+    Entrar con Google
+  </button>
+  <div id="loginError" class="login-error" style="display:none"></div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dashboard" id="dashboard">
+  <div class="header">
+    <h1>Urban Royal Admin</h1>
+    <div class="header-right">
+      <span class="admin-email" id="adminEmail"></span>
+      <button class="logout-btn" onclick="logout()">Cerrar sesion</button>
+    </div>
+  </div>
+
+  <div class="stats" id="statsContainer">
+    <div class="stat-card stat-total"><div class="stat-number" id="statTotal">-</div><div class="stat-label">Total Usuarios</div></div>
+    <div class="stat-card stat-premium"><div class="stat-number" id="statPremium">-</div><div class="stat-label">Premium</div></div>
+    <div class="stat-card stat-free"><div class="stat-number" id="statFree">-</div><div class="stat-label">Gratis</div></div>
+    <div class="stat-card stat-banned"><div class="stat-number" id="statBanned">-</div><div class="stat-label">Baneados</div></div>
+  </div>
+
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="Buscar usuario por nombre o correo..." oninput="filterUsers()">
+  </div>
+
+  <div class="table-container">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>Usuario</th>
+          <th>Email</th>
+          <th>Estado</th>
+          <th>Registro</th>
+          <th>Ultimo acceso</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="usersBody">
+        <tr><td colspan="6" class="loading"><div class="spinner"></div><br>Cargando usuarios...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MESSAGE MODAL -->
+<div class="modal-overlay" id="msgModal">
+  <div class="modal">
+    <h3>Enviar mensaje a <span id="msgUserName"></span></h3>
+    <textarea id="msgText" placeholder="Escribe tu mensaje aqui..."></textarea>
+    <div class="modal-actions">
+      <button class="btn btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-send" onclick="sendMessage()">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = 'https://eoiecaaldvsjlprrcqgk.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVvaWVjYWFsZHZzamxwcnJjcWdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzEzNzQwMTksImV4cCI6MjA4Njk1MDAxOX0.xAtO1ULOfpb3LKPzumC6ICKEbdzOzZGLDH4zDAxIgps';
+const ADMIN_EMAIL = 'lgjuance@gmail.com';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let allUsers = [];
+let currentMsgUserId = null;
+
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) {
+    await checkAdmin(session);
+  }
+}
+
+async function loginWithGoogle() {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin + window.location.pathname }
+  });
+  if (error) showLoginError(error.message);
+}
+
+async function checkAdmin(session) {
+  const email = session.user.email;
+  if (email !== ADMIN_EMAIL) {
+    showLoginError('Acceso denegado. Solo el administrador puede ingresar (' + ADMIN_EMAIL + ')');
+    await sb.auth.signOut();
+    return;
+  }
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  document.getElementById('adminEmail').textContent = email;
+  loadData();
+}
+
+function showLoginError(msg) {
+  const el = document.getElementById('loginError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+async function logout() {
+  await sb.auth.signOut();
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginError').style.display = 'none';
+}
+
+async function loadData() {
+  await Promise.all([loadStats(), loadUsers()]);
+}
+
+async function loadStats() {
+  const { data, error } = await sb.rpc('admin_get_stats');
+  if (error) { toast('Error cargando stats: ' + error.message, 'error'); return; }
+  const s = data[0] || data;
+  document.getElementById('statTotal').textContent = s.total_users || 0;
+  document.getElementById('statPremium').textContent = s.premium_users || 0;
+  document.getElementById('statFree').textContent = s.free_users || 0;
+  document.getElementById('statBanned').textContent = s.banned_users || 0;
+}
+
+async function loadUsers() {
+  const { data, error } = await sb.rpc('admin_get_users');
+  if (error) { toast('Error cargando usuarios: ' + error.message, 'error'); return; }
+  allUsers = data || [];
+  renderUsers(allUsers);
+}
+
+function renderUsers(users) {
+  const tbody = document.getElementById('usersBody');
+  if (!users.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:30px">No se encontraron usuarios</td></tr>';
+    return;
+  }
+  tbody.innerHTML = users.map(u => {
+    const name = u.display_name || u.email?.split('@')[0] || 'Sin nombre';
+    const statusBadges = [];
+    if (u.is_admin) statusBadges.push('<span class="badge badge-admin">ADMIN</span>');
+    if (u.is_banned) statusBadges.push('<span class="badge badge-banned">BANEADO</span>');
+    else if (u.is_premium) statusBadges.push('<span class="badge badge-premium">PREMIUM</span>');
+    else statusBadges.push('<span class="badge badge-free">GRATIS</span>');
+
+    const created = u.created_at ? new Date(u.created_at).toLocaleDateString('es-CO') : '-';
+    const lastSign = u.last_sign_in ? new Date(u.last_sign_in).toLocaleDateString('es-CO') : '-';
+
+    const premiumBtn = u.is_premium
+      ? `<button class="btn btn-sm btn-free" onclick="setPremium('${u.id}',false)" title="Quitar Premium">Free</button>`
+      : `<button class="btn btn-sm btn-premium" onclick="setPremium('${u.id}',true)" title="Dar Premium">Premium</button>`;
+
+    const banBtn = u.is_banned
+      ? `<button class="btn btn-sm btn-unban" onclick="banUser('${u.id}',false)" title="Desbanear">Desbanear</button>`
+      : `<button class="btn btn-sm btn-ban" onclick="banUser('${u.id}',true)" title="Banear">Banear</button>`;
+
+    const msgBtn = `<button class="btn btn-sm btn-msg" onclick="openMsgModal('${u.id}','${name.replace(/'/g,"\\'")}')" title="Enviar mensaje">Mensaje</button>`;
+
+    return `<tr>
+      <td><strong>${name}</strong></td>
+      <td>${u.email || '-'}</td>
+      <td>${statusBadges.join(' ')}</td>
+      <td>${created}</td>
+      <td>${lastSign}</td>
+      <td><div class="actions">${premiumBtn}${banBtn}${msgBtn}</div></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterUsers() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  if (!q) { renderUsers(allUsers); return; }
+  renderUsers(allUsers.filter(u =>
+    (u.display_name || '').toLowerCase().includes(q) ||
+    (u.email || '').toLowerCase().includes(q)
+  ));
+}
+
+async function setPremium(userId, status) {
+  const { error } = await sb.rpc('admin_set_premium', { target_user_id: userId, premium_status: status });
+  if (error) { toast('Error: ' + error.message, 'error'); return; }
+  toast(status ? 'Usuario marcado como Premium' : 'Usuario marcado como Gratis', 'success');
+  loadData();
+}
+
+async function banUser(userId, status) {
+  if (status && !confirm('Estas seguro de banear este usuario?')) return;
+  const { error } = await sb.rpc('admin_ban_user', { target_user_id: userId, ban_status: status });
+  if (error) { toast('Error: ' + error.message, 'error'); return; }
+  toast(status ? 'Usuario baneado' : 'Usuario desbaneado', 'success');
+  loadData();
+}
+
+function openMsgModal(userId, name) {
+  currentMsgUserId = userId;
+  document.getElementById('msgUserName').textContent = name;
+  document.getElementById('msgText').value = '';
+  document.getElementById('msgModal').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('msgModal').classList.remove('active');
+  currentMsgUserId = null;
+}
+
+async function sendMessage() {
+  const msg = document.getElementById('msgText').value.trim();
+  if (!msg) { toast('Escribe un mensaje', 'error'); return; }
+  const { error } = await sb.rpc('admin_send_message', { target_user_id: currentMsgUserId, msg: msg });
+  if (error) { toast('Error: ' + error.message, 'error'); return; }
+  toast('Mensaje enviado', 'success');
+  closeModal();
+}
+
+function toast(message, type) {
+  const el = document.getElementById('toast');
+  el.textContent = message;
+  el.className = 'toast toast-' + type + ' show';
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'SIGNED_IN' && session) {
+    await checkAdmin(session);
+  }
+});
+
+init();
+</script>
+</body>
+</html>
